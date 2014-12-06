@@ -1,19 +1,16 @@
-//lua interface for unity c#
+//lua interface for c#
 //by lxd
 
 /* 
 #if UNITY_STANDALONE_WIN || UNITY_STANDALONE_OSX || UNITY_EDITOR
-	[DllImport("libname")]
+    [DllImport("libname")]
     public static extern bool func(int arg);
-
 #elif UNITY_IPHONE
     [DllImport (libname)]
     public static extern bool func(int arg);
-    
 #elif UNITY_ANDROID
-	[DllImport("libname")]
+    [DllImport("libname")]
     public static extern bool func(int arg);
-	
 #endif
 */
 
@@ -28,11 +25,11 @@ public class lua
 #if UNITY_STANDALONE_WIN
     private const string libname = "liblua";
 #elif UNITY_STANDALONE_OSX
-	private const string libname = "liblua_mac";
+    private const string libname = "liblua_mac";
 #elif UNITY_IPHONE
-	private const string libname = "__Internal";
+    private const string libname = "__Internal";
 #elif UNITY_ANDROID
-	private const string libname = "lua";
+    private const string libname = "lua";
 #endif
 
     public const string LUA_VERSION_MAJOR = "5";
@@ -189,7 +186,7 @@ public class lua
     /*
     ** Comparison and arithmetic functions
     */
-    public const int LUA_OPADD = 0;	/* ORDER TM */
+    public const int LUA_OPADD = 0;  /* ORDER TM */
     public const int LUA_OPSUB = 1;
     public const int LUA_OPMUL = 2;
     public const int LUA_OPDIV = 3;
@@ -721,13 +718,13 @@ public class lua
         lua_getfield(L, LUA_REGISTRYINDEX, n);
     }
 
-    //public delegate LuaNumberType LuaLOptDelegate (IntPtr L, int narg);		
+    //public delegate LuaNumberType LuaLOptDelegate (IntPtr L, int narg);
     //public static LuaNumberType LuaLOpt(IntPtr L, LuaLOptDelegate f, int n, LuaNumberType d) {
-    //	return LuaIsNoneOrNil(L, (n != 0) ? d : f(L, n)) ? 1 : 0;}
+    //    return LuaIsNoneOrNil(L, (n != 0) ? d : f(L, n)) ? 1 : 0;}
 
     //public delegate LuaIntegerType LuaLOptDelegateInteger(IntPtr L, int narg);
     //public static LuaIntegerType LuaLOptInteger(IntPtr L, LuaLOptDelegateInteger f, int n, LuaNumberType d) {
-    //	return (LuaIntegerType)(LuaIsNoneOrNil(L, n) ? d : f(L, (n)));
+    //    return (LuaIntegerType)(LuaIsNoneOrNil(L, n) ? d : f(L, (n)));
     //}
 
     /*

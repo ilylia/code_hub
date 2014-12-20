@@ -29,7 +29,7 @@ public class lua
 #elif UNITY_IPHONE
     private const string libname = "__Internal";
 #elif UNITY_ANDROID
-	private const string libname = "liblua";
+    private const string libname = "liblua";
 #endif
 
     public const string LUA_VERSION_MAJOR = "5";

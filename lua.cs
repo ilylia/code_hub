@@ -29,7 +29,7 @@ public class lua
 #elif UNITY_IPHONE
     private const string libname = "__Internal";
 #elif UNITY_ANDROID
-    private const string libname = "lua";
+	private const string libname = "liblua";
 #endif
 
     public const string LUA_VERSION_MAJOR = "5";
@@ -451,11 +451,11 @@ public class lua
         lua_rawgeti(L, LUA_REGISTRYINDEX, LUA_RIDX_GLOBALS);
     }
 
-    [return: MarshalAs(UnmanagedType.LPStr)]
-    public static /*string*/IntPtr lua_tostring(IntPtr L, int i)
+    public static string lua_tostring(IntPtr L, int i)
     {
         int len = 0;
-        return lua_tolstring(L, i, out len);
+        IntPtr p = lua_tolstring(L, i, out len);
+        return Marshal.PtrToStringAnsi(p, len);
     }
 
     /*
@@ -661,15 +661,17 @@ public class lua
         if (!cond)
             luaL_argerror(L, numarg, extramsg);
     }
-    public static /*string*/IntPtr luaL_checkstring(IntPtr L, int n)
+    public static string luaL_checkstring(IntPtr L, int n)
     {
         int len;
-        return luaL_checklstring(L, n, out len);
+        IntPtr p = luaL_checklstring(L, n, out len);
+        return Marshal.PtrToStringAnsi(p, len);
     }
-    public static /*string*/IntPtr luaL_optstring(IntPtr L, int n, [MarshalAs(UnmanagedType.LPStr)]string d)
+    public static string luaL_optstring(IntPtr L, int n, [MarshalAs(UnmanagedType.LPStr)]string d)
     {
         int len;
-        return luaL_optlstring(L, n, d, out len);
+        IntPtr p = luaL_optlstring(L, n, d, out len);
+        return Marshal.PtrToStringAnsi(p, len);
     }
     public static int luaL_checkint(IntPtr L, int n)
     {
@@ -688,9 +690,10 @@ public class lua
         return (long)luaL_optinteger(L, n, d);
     }
 
-    public static /*string*/IntPtr luaL_typename(IntPtr L, int i)
+    public static string luaL_typename(IntPtr L, int i)
     {
-        return lua_typename(L, lua_type(L, i));
+        IntPtr p = lua_typename(L, lua_type(L, i));
+        return Marshal.PtrToStringAnsi(p);
     }
 
     public static int luaL_dofile(IntPtr L, [MarshalAs(UnmanagedType.LPStr)]string s)
@@ -878,7 +881,7 @@ public class lua
     {
         if (lua.lua_isstring(L, -1) != 0)
         {
-            string error = IntPtr2String(lua_tostring(L, -1));
+            string error = lua_tostring(L, -1);
             lua_pop(L, 1);
             return error;
         }
@@ -1129,6 +1132,78 @@ public class lua
             }
         }
 
+        public void GetValue(ref int ret)
+        {
+            if (eType == ELuaObjType.ENumber)
+            {
+                ret = (int)fValue;
+            }
+            else
+            {
+                ret = 0;
+            }
+        }
+
+        public void GetValue(ref float ret)
+        {
+            if (eType == ELuaObjType.ENumber)
+            {
+                ret = fValue;
+            }
+            else
+            {
+                ret = 0;
+            }
+        }
+
+        public void GetValue(ref string ret)
+        {
+            if (eType == ELuaObjType.EString)
+            {
+                ret = strValue;
+            }
+            else
+            {
+                ret = null;
+            }
+        }
+
+        public void GetValue(ref Dictionary<int, float> ret)
+        {
+            if (eType == ELuaObjType.ETable)
+            {
+                foreach (var kv in mapObjectValue)
+                {
+                    if (kv.Key.Type == ELuaObjType.ENumber && kv.Value.Type == ELuaObjType.ENumber)
+                    {
+                        ret.Add((int)kv.Key, (float)kv.Value);
+                    }
+                }
+            }
+            else
+            {
+                ret.Clear();
+            }
+        }
+
+        public void GetValue(ref Dictionary<string, float> ret)
+        {
+            if (eType == ELuaObjType.ENumber)
+            {
+                foreach (var kv in mapObjectValue)
+                {
+                    if (kv.Key.Type == ELuaObjType.EString && kv.Value.Type == ELuaObjType.ENumber)
+                    {
+                        ret.Add((string)kv.Key, (float)kv.Value);
+                    }
+                }
+            }
+            else
+            {
+                ret.Clear();
+            }
+        }
+
     }
 
     public static bool lua_toobjectkey(IntPtr L, int idx, ref SLuaObjectKey key)
@@ -1140,7 +1215,7 @@ public class lua
         else if (lua_isstring(L, idx) != 0)
         {
             //stObjectKey.eType = ELuaStrType;
-            key.Str = IntPtr2String(lua_tostring(L, idx));
+            key.Str = lua_tostring(L, idx);
         }
         else
         {
@@ -1158,7 +1233,7 @@ public class lua
         }
         else if (lua_isstring(L, idx) != 0)
         {
-            obj.Str = IntPtr2String(lua_tostring(L, idx));
+            obj.Str = lua_tostring(L, idx);
         }
         else if (lua_istable(L, idx))
         {
@@ -1194,7 +1269,7 @@ public class lua
         switch (k.Type)
         {
             case ELuaObjType.ENumber:
-                lua_pushnumber(L, k.Num);
+                lua_pushinteger(L, k.Num);
                 return true;
             case ELuaObjType.EString:
                 lua_pushstring(L, k.Str);
@@ -1229,8 +1304,8 @@ public class lua
 
         for (int i=0; i<arr.Length; ++i)
         {
-            lua_pushnumber(L, i+1);//key
-            lua_pushnumber(L, arr[i]);//val
+            lua_pushinteger(L, i+1);//key
+            lua_pushinteger(L, arr[i]);//val
             lua_settable(L, nTableIndex);
         }
     }
@@ -1242,7 +1317,7 @@ public class lua
 
         for (int i = 0; i < arr.Length; ++i)
         {
-            lua_pushnumber(L, i + 1);//key
+            lua_pushinteger(L, i + 1);//key
             lua_pushnumber(L, arr[i]);//val
             lua_settable(L, nTableIndex);
         }
@@ -1255,7 +1330,7 @@ public class lua
 
         for (int i = 0; i < arr.Length; ++i)
         {
-            lua_pushnumber(L, i + 1);//key
+            lua_pushinteger(L, i + 1);//key
             lua_pushstring(L, arr[i]);//val
             lua_settable(L, nTableIndex);
         }
@@ -1268,7 +1343,7 @@ public class lua
 
         for (int i = 0; i < t.Count; ++i)
         {
-            lua_pushnumber(L, i);//key
+            lua_pushinteger(L, i);//key
             lua_pushnumber(L, t[i]);//val
             lua_settable(L, nTableIndex);
         }
@@ -1281,7 +1356,7 @@ public class lua
 
         foreach (KeyValuePair<int, float> kv in t)
         {
-            lua_pushnumber(L, kv.Key);//key
+            lua_pushinteger(L, kv.Key);//key
             lua_pushnumber(L, kv.Value);//val
             lua_settable(L, nTableIndex);
         }
